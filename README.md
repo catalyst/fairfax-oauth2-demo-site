@@ -18,7 +18,7 @@ Note that this example doesn't request explicit scopes and doesn't pass through 
 
 ## 1. Getting started ##
 
-This example provides an Ubuntu 14 <a href="http://vagrantup.com">Vagrant</a> file that provides
+This example provides an Ubuntu 14 (64 bit) <a href="http://vagrantup.com">Vagrant</a> file that provides
 all of the dependencies required to run the demo site.
 
   1.1. Clone the repository
