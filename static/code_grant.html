@@ -1,0 +1,196 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>OAuth2.0 Integration Example</title>
+
+    <link href="css/bootstrap.min.css" rel="stylesheet">
+
+    <style type="text/css">
+        div.step {
+            padding: 10px;
+            border-radius: 5px;
+        }
+        div.step h2 {
+            margin-top: 0px;
+        }
+        div.step.completed {
+            background-color: #eaeae0;
+            color: #555;
+        }
+    </style>
+
+    <!--[if lt IE 9]>
+      <script src="https://oss.maxcdn.com/html5shiv/3.7.2/html5shiv.min.js"></script>
+      <script src="https://oss.maxcdn.com/respond/1.4.2/respond.min.js"></script>
+    <![endif]-->
+  </head>
+  <body>
+    <p/>
+    <div class="row">
+        <div class="col-lg-3"></div>
+        <div class="col-lg-6">
+            <span style="float:right"><button id="reset_btn" type="button" class="btn">Reset</button></span>
+            <h1>Code grant</h1>
+
+            <div class="step" id="do-login">
+            <h2>(A) Client site login link <span class='glyphicon'></span></h2>
+            <pre></pre>
+            <button type="button" class="btn btn-lg btn-primary">Log in</button>
+            </div>
+
+            <div class="step" id="user-consent">
+            <h2>(B) User authentication and consent <span class='glyphicon'></span></h2>
+            </div>
+
+            <div class="step" id="code-granted">
+            <h2>(C) Code granted <span class='glyphicon'></span></h2>
+            <pre>No data</pre>
+            </div>
+
+            <div class="step" id="code-used">
+            <h2>(D) Site exchanges Code for Token<span class='glyphicon'></span></h2>
+            <pre>No data</pre>
+            <button type="button" class="btn btn-lg btn-primary">Exchange</button>
+            </div>
+
+            <div class="step" id="token-granted">
+            <h2>(E) Token granted<span class='glyphicon'></span></h2>
+            <pre>No data</pre>
+            <button type="button" class="btn btn-lg btn-primary">Refresh Token</button>
+            </div>
+
+            <div class="step" id="token-used">
+            <h2>(F) Token used to access profile <span class='glyphicon'></span></h2>
+            <button type="button" class="btn btn-lg btn-primary">Fetch profile</button>
+            <p></p>
+            <pre>No data</pre>
+            </div>
+
+            <div class="step" id="review">
+            <h2>(E) User has reviewed active token grants <span class='glyphicon'></span></h2>
+            <button type="button" class="btn btn-lg btn-primary">Manage tokens</button>
+            </div>
+        </div>
+        <div class="col-lg-3"></div>
+    </div>
+    <script src="js/jquery.min.js"></script>
+    <script src="js/bootstrap.min.js"></script>
+    <script src="js/demo.js"></script>
+    <script type="text/JavaScript">
+        $(document).ready(function(){
+            $('#reset_btn').click(function(){
+                $(this).removeClass('btn-danger').addClass('btn-default');
+                localStorage.clear();
+                oauth2.do_logout();
+            });
+            $('#do-login > pre').text('<a href="' + oauth2.links['code-login'] + '">Log in</a>');
+            $('#do-login > button').click(function(){
+                if (localStorage.getItem('user-consent')){
+                    localStorage.clear();
+                }
+                ui.set_status('do-login', 'good');
+                oauth2.do_login('code');
+            });
+            $('#code-used > button').click(function(){
+                if (localStorage.getItem('code-granted') !== 'good' || !oauth2.code_grant.get()){
+                    alert('Previous step must be completed successfully first');
+                    return false;
+                }
+                $('#token-granted > pre').text('...');
+                oauth2.trigger_code_exchange_api(
+                    function success(data){
+                        ui.set_status('code-used', 'good');
+                        ui.set_status('token-granted', 'good');
+                        $('#token-granted > pre').text(JSON.stringify(data, null, 3));
+                    },
+                    function access_denied(data){
+                        if (data.responseJSON){
+                            $('#token-granted > pre').text(JSON.stringify(data.responseJSON, null, 3));
+                        }
+                    },
+                    function error(){
+                        ui.set_status('code-used', 'bad');
+                        ['token-granted', 'token-used', 'review'].map(function(n){ui.set_status(n); });
+                        alert('Code no longer valid');
+                    }
+                );
+            });
+            $('#token-granted > button').click(function(){
+                if (localStorage.getItem('token-granted') !== 'good' || !oauth2.token_grant.access_token()){
+                    alert('Previous step must be completed successfully first');
+                    return false;
+                }
+                $('#token-granted > pre').text('...');
+                oauth2.trigger_refresh_api(
+                    function success(data){
+                        ui.set_status('token-granted', 'good');
+                        $('#token-granted > pre').text(JSON.stringify(data, null, 3));
+                    },
+                    function access_denied(data){
+                        if (data.responseJSON){
+                            $('#token-granted > pre').text(JSON.stringify(data.responseJSON, null, 3));
+                        }
+                    },
+                    function error(){
+                        ui.set_status('token-granted', 'bad');
+                        ['token-used', 'review'].map(function(n){ui.set_status(n); });
+                        alert('Refresh Token no longer valid');
+                    }
+                );
+            });
+            $('#token-used > button').click(function(){
+                if (localStorage.getItem('token-granted') !== 'good' || !oauth2.token_grant.access_token()){
+                    alert('Previous step must be completed successfully first');
+                    return false;
+                }
+                $('#token-used > pre').text('...');
+                oauth2.do_profile_api(
+                    function success(data){
+                        ui.set_status('token-used', 'good');
+                        $('#token-used > pre').text(JSON.stringify(data, null, 3));
+                    },
+                    function error(){
+                        ui.set_status('token-used', 'bad');
+                        ui.set_status('review', null);
+                        alert('Token no longer valid');
+                    }
+                );
+            });
+            $('#review > button').click(function(){
+                if (localStorage.getItem('user-consent') !== 'good'){
+                    alert('Previous step must be completed successfully first');
+                    return false;
+                }
+                ui.set_status('review', 'good');
+                oauth2.do_review();
+            });
+
+            var code_grant = oauth2.code_grant.get();
+            if (code_grant){
+                ui.set_status('user-consent', 'good');
+                ui.set_status('code-granted', 'good');
+                $('#code-granted > pre').text('code=' + code_grant);
+                $('#code-used > pre').text(ui.token_exchange_example(code_grant));
+            }
+            var token_data = oauth2.token_grant.toString();
+            if (token_data){
+                ui.set_status('token-granted', 'good');
+                $('#token-granted > pre').text(token_data);
+            }
+
+            var progress = null;
+            ['do-login', 'user-consent', 'code-granted', 'code-used', 'token-granted', 'token-used', 'review'].forEach(function(s){
+                var i = localStorage.getItem(s);
+                progress = i || progress;
+                if (s){
+                    ui.set_status(s, i);
+                }
+            });
+            $('#reset_btn').addClass(progress ? 'btn-danger' : 'btn-default');
+        });
+    </script>
+  </body>
+</html>

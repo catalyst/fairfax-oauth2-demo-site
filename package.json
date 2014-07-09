@@ -1,0 +1,22 @@
+{
+  "name": "fairfax-oauth2-demo-site",
+  "description": "OAuth 2.0 integration test site",
+  "version": "0.9.0",
+  "private": "true",
+  "repository": {
+    "type": "git",
+    "url": "github.com:catalyst/fairfax-oauth2-demo-site.git"
+  },
+  "licenses": [
+    {
+      "type": "GPLv3",
+      "url": "http://www.gnu.org/licenses/"
+    }
+  ],
+  "dependencies": {
+    "express": "2.x.x"
+  },
+  "scripts": {
+    "start":    "node ./server.js"
+  }
+}
