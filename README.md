@@ -28,7 +28,7 @@ all of the dependencies required to run the demo site.
 
   1.2. Start vagrant
 
-    > vagrant up
+    > vagrant up --provision
 
   1.3. Connect to the demo site.
 
@@ -37,3 +37,11 @@ The guest VM's port is forwarded to the host machine.
 
 The site provides examples for both the <a href="http://localhost:9000/code_grant.html">Authorization Code Grant</a>
 and <a href="http://localhost:9000/implicit_grant.html">Implicit Grant</a> patterns.
+
+## 2. Pointing at a custom authorization server
+
+To change which OAuth2 server the demo site talks to, edit the following lines in <tt>static/js/demo.js</tt>
+
+    var auth_server = 'auth.medusa.stuff.co.nz',
+        auth_port = '443',
+        auth_use_ssl = true,
