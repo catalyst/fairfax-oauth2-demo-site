@@ -70,7 +70,8 @@
             </div>
 
             <div class="step" id="review">
-            <h2>(E) User has reviewed active token grants <span class='glyphicon'></span></h2>
+            <h2>(G) User has reviewed active token grants <span class='glyphicon'></span></h2>
+            <pre></pre>
             <button type="button" class="btn btn-lg btn-primary">Manage tokens</button>
             </div>
         </div>
@@ -159,6 +160,7 @@
                     }
                 );
             });
+            $('#review > pre').text('<a href="' + oauth2.links['review'] + '">Manage tokens</a>');
             $('#review > button').click(function(){
                 if (localStorage.getItem('user-consent') !== 'good'){
                     alert('Previous step must be completed successfully first');
