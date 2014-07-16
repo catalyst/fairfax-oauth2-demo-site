@@ -18,14 +18,17 @@ app.get('/token', function(req, res){
         client_id: 'sp-demo',
         client_secret: 'hunter2'
     };
+    var str = JSON.stringify(data);
     var opt = {
         hostname: req.param('server'),
         port: req.param('port'),
         path: '/token',
+        rejectUnauthorized: false,
         method: 'POST',
         headers: {
             'User-Agent': 'Stuff Nation OAuth2 Demo',
             'Content-Type': 'application/json',
+            'Content-Length': str.length,
             'Accept': '*/*'
         }
     };
@@ -38,7 +41,8 @@ app.get('/token', function(req, res){
             try{
                 j = JSON.parse(auth_data);
             }catch(ex){
-                console.log(ex);
+                console.log('Error parsing JSON: ' + ex);
+                console.log(auth_data);
             }
             if (j.error){
                 res.statusCode = 401;
@@ -46,7 +50,8 @@ app.get('/token', function(req, res){
             res.json(j);
         });
     });
-    auth_req.write(JSON.stringify(data));
+    auth_req.write(str);
+    console.log("curl -k -i -H 'Content-Type: application/json' -d '" + str + "' '" + (req.param('ssl') ? 'https' : 'http') + '://' + opt.hostname + ':' + opt.port + opt.path + "'");
     auth_req.end();
     auth_req.on('error', function(err){
         var es = JSON.stringify(err);
@@ -63,14 +68,17 @@ app.get('/refresh', function(req, res){
         client_id: 'sp-demo',
         client_secret: 'hunter2'
     };
+    var str = JSON.stringify(data);
     var opt = {
         hostname: req.param('server'),
         port: req.param('port'),
         path: '/token',
         method: 'POST',
+        rejectUnauthorized: false,
         headers: {
             'User-Agent': 'Stuff Nation OAuth2 Demo',
             'Content-Type': 'application/json',
+            'Content-Length': str.length,
             'Accept': '*/*'
         }
     };
@@ -83,7 +91,8 @@ app.get('/refresh', function(req, res){
             try{
                 j = JSON.parse(auth_data);
             }catch(ex){
-                console.log(ex);
+                console.log('Error parsing JSON: ' + ex);
+                console.log(auth_data);
             }
             if (j.error){
                 res.statusCode = 401;
@@ -91,7 +100,7 @@ app.get('/refresh', function(req, res){
             res.json(j);
         });
     });
-    auth_req.write(JSON.stringify(data));
+    auth_req.write(str);
     auth_req.end();
     auth_req.on('error', function(err){
         var es = JSON.stringify(err);
