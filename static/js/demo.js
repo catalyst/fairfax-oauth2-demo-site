@@ -175,17 +175,35 @@ var ui = (function(){
             }
         },
         token_exchange_example: function(code){
-            return  'POST /token HTTP/1.1\n' +
-                    'Host: ' + oauth2.auth_uri + '\n' +
-                    'User-Agent: Dummy\n' +
-                    'Authorization: Basic dGVzdDpodW50ZXIy\n' +
-                    'Content-Type: application/json\n' +
-                    '\n' +
-                    '{\n' +
-                    '   "grant_type":"authorization_code",\n' +
-                    '   "code":"' + code + '",\n' +
-                    '   "redirect_uri":"' + origin(window.location.href) + '"\n' +
-                    '}';
+            var data = {
+                grant_type: 'authorization_code',
+                code: code,
+                redirect_uri: origin(window.location.href),
+                client_id: 'sp-demo',
+                client_secret: 'hunter2'
+            };
+            return  'echo \'' + JSON.stringify(data, null, 3) +
+                    '\' | curl -k -i -d @- -H "Content-Type:application/json" ' + oauth2.auth_uri + '/token';
+        },
+        token_refresh_example: function(token){
+            if (!token){
+                return 'No Data';
+            }
+            var data = {
+                grant_type: 'refresh_token',
+                refresh_token: token,
+                redirect_uri: origin(window.location.href),
+                client_id: 'sp-demo',
+                client_secret: 'hunter2'
+            };
+            return  'echo \'' + JSON.stringify(data, null, 3) +
+                    '\' | curl -k -i -d @- -H "Content-Type:application/json" ' + oauth2.auth_uri + '/token';
+        },
+        profile_api_example: function(token){
+            if (!token){
+                return 'No Data';
+            }
+            return 'curl -k -i -H "Authorization:Bearer ' + token + '" ' + oauth2.auth_uri + '/api/profile';
         }
     };
 })();

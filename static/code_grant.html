@@ -59,18 +59,27 @@
             <div class="step" id="token-granted">
             <h2>(E) Token granted<span class='glyphicon'></span></h2>
             <pre>No data</pre>
-            <button type="button" class="btn btn-lg btn-primary">Refresh Token</button>
+            </div>
+
+            <div class="step" id="token-refresh">
+            <h2>(E') Token refresh (optional)<span class='glyphicon'></span></h2>
+            <pre>No data</pre>
+            <button type="button" class="btn btn-lg btn-primary">Refresh</button>
             </div>
 
             <div class="step" id="token-used">
             <h2>(F) Token used to access profile <span class='glyphicon'></span></h2>
+            <pre>No data</pre>
             <button type="button" class="btn btn-lg btn-primary">Fetch profile</button>
-            <p></p>
+            </div>
+
+            <div class="step" id="token-recvd">
+            <h2>(G) Profile info received <span class='glyphicon'></span></h2>
             <pre>No data</pre>
             </div>
 
             <div class="step" id="review">
-            <h2>(G) User has reviewed active token grants <span class='glyphicon'></span></h2>
+            <h2>(H) User has reviewed active token grants <span class='glyphicon'></span></h2>
             <pre></pre>
             <button type="button" class="btn btn-lg btn-primary">Manage tokens</button>
             </div>
@@ -106,6 +115,8 @@
                         ui.set_status('code-used', 'good');
                         ui.set_status('token-granted', 'good');
                         $('#token-granted > pre').text(JSON.stringify(data, null, 3));
+                        $('#token-refresh > pre').text(ui.token_refresh_example(oauth2.token_grant.get().refresh_token));
+                        $('#token-used > pre').text(ui.profile_api_example(oauth2.token_grant.get().access_token));
                     },
                     function access_denied(data){
                         if (data.responseJSON){
@@ -114,21 +125,24 @@
                     },
                     function error(){
                         ui.set_status('code-used', 'bad');
-                        ['token-granted', 'token-used', 'review'].map(function(n){ui.set_status(n); });
+                        ['token-granted', 'token-used', 'token-recvd', 'review'].map(function(n){ui.set_status(n); });
                         alert('Code no longer valid');
                     }
                 );
             });
-            $('#token-granted > button').click(function(){
+            $('#token-refresh > button').click(function(){
                 if (localStorage.getItem('token-granted') !== 'good' || !oauth2.token_grant.access_token()){
                     alert('Previous step must be completed successfully first');
                     return false;
                 }
+                $('#token-used > pre').text('...');
                 $('#token-granted > pre').text('...');
                 oauth2.trigger_refresh_api(
                     function success(data){
-                        ui.set_status('token-granted', 'good');
+                        ['token-granted', 'token-refresh'].map(function(n){ ui.set_status(n, 'good'); });
                         $('#token-granted > pre').text(JSON.stringify(data, null, 3));
+                        $('#token-refresh > pre').text(ui.token_refresh_example(oauth2.token_grant.get().refresh_token));
+                        $('#token-used > pre').text(ui.profile_api_example(oauth2.token_grant.get().access_token));
                     },
                     function access_denied(data){
                         if (data.responseJSON){
@@ -136,8 +150,8 @@
                         }
                     },
                     function error(){
-                        ui.set_status('token-granted', 'bad');
-                        ['token-used', 'review'].map(function(n){ui.set_status(n); });
+                        ['token-granted', 'token-refresh'].map(function(n){ ui.set_status(n, 'bad'); });
+                        ['token-used', 'token-recvd', 'review'].map(function(n){ui.set_status(n); });
                         alert('Refresh Token no longer valid');
                     }
                 );
@@ -147,15 +161,15 @@
                     alert('Previous step must be completed successfully first');
                     return false;
                 }
-                $('#token-used > pre').text('...');
+                $('#token-recvd > pre').text('...');
                 oauth2.do_profile_api(
                     function success(data){
-                        ui.set_status('token-used', 'good');
-                        $('#token-used > pre').text(JSON.stringify(data, null, 3));
+                        ['token-used', 'token-recvd'].map(function(n){ ui.set_status(n, 'good'); });
+                        $('#token-recvd > pre').text(JSON.stringify(data, null, 3));
                     },
                     function error(){
                         ui.set_status('token-used', 'bad');
-                        ui.set_status('review', null);
+                        ['token-recvd', 'review'].map(function(n){ ui.set_status(n); });
                         alert('Token no longer valid');
                     }
                 );
@@ -181,10 +195,12 @@
             if (token_data){
                 ui.set_status('token-granted', 'good');
                 $('#token-granted > pre').text(token_data);
+                $('#token-refresh > pre').text(ui.token_refresh_example(oauth2.token_grant.get().refresh_token));
+                $('#token-used > pre').text(ui.profile_api_example(oauth2.token_grant.get().access_token));
             }
 
             var progress = null;
-            ['do-login', 'user-consent', 'code-granted', 'code-used', 'token-granted', 'token-used', 'review'].forEach(function(s){
+            ['do-login', 'user-consent', 'code-granted', 'code-used', 'token-granted', 'token-refresh', 'token-used', 'token-recvd', 'review'].forEach(function(s){
                 var i = localStorage.getItem(s);
                 progress = i || progress;
                 if (s){
